@@ -47,6 +47,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BucketHash.cs" />
+    <Compile Include="LinearProbingHash.cs" />
+    <Compile Include="QuadraticProbingHash.cs" />
+    <Compile Include="DoubleHash.cs" />
     <Compile Include="PalavraEDica.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
