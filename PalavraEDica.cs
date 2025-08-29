@@ -7,6 +7,12 @@ namespace apListaLigada
 {
     internal class PalavraEDica : IComparable<PalavraEDica>, IRegistro<PalavraEDica>
     {
+        public PalavraEDica()
+        {
+            Palavra = string.Empty;
+            Dica = string.Empty;
+        }
+
         public string Palavra { get; set; }
         public string Dica { get; set; }
 
@@ -86,10 +92,6 @@ namespace apListaLigada
             return string.Equals(Palavra, outroRegistro.Palavra, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(Dica, outroRegistro.Dica, StringComparison.OrdinalIgnoreCase);
         }
-        public PalavraEDica()
-        {
-            Palavra = string.Empty;
-            Dica = string.Empty;
-        }
+        
     }
 }
