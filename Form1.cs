@@ -64,6 +64,12 @@ namespace OpenAddressingHashTable.NET
                 textBox_Dica.Clear();
                 lsbListagem.ClearSelection();
                 
+                // Clear the current hash table before creating a new one
+                if (hashTable != null)
+                {
+                    ClearCurrentHashTable();
+                }
+                
                 // Load data from file every time a radio button is selected
                 LoadDataFromFile();
                 
@@ -299,6 +305,22 @@ namespace OpenAddressingHashTable.NET
                 foreach (var item in cachedData)
                 {
                     hashTable.Incluir(item);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Limpa a tabela hash atual usando reflexão para chamar o método Limpar se disponível
+        /// </summary>
+        private void ClearCurrentHashTable()
+        {
+            if (hashTable != null)
+            {
+                // Use reflection to check if the current hash table has a Limpar method
+                var limparMethod = hashTable.GetType().GetMethod("Limpar");
+                if (limparMethod != null)
+                {
+                    limparMethod.Invoke(hashTable, null);
                 }
             }
         }
