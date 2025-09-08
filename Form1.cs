@@ -59,6 +59,11 @@ namespace OpenAddressingHashTable.NET
             RadioButton radio = sender as RadioButton;
             if (radio != null && radio.Checked)
             {
+                // Clear information from previous operation
+                textBox_palavra.Clear();
+                textBox_Dica.Clear();
+                lsbListagem.ClearSelection();
+                
                 // Load data from file every time a radio button is selected
                 LoadDataFromFile();
                 
