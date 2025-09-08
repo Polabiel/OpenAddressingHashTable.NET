@@ -3,7 +3,7 @@
 using Microsoft.Win32;
 using System;
 using System.IO;
-namespace apListaLigada
+namespace OpenAddressingHashTable.NET
 {
     internal class PalavraEDica : IComparable<PalavraEDica>, IRegistro<PalavraEDica>
     {
