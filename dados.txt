@@ -1,0 +1,10 @@
+casa                          Local onde vivemos
+carro                         Veículo de transporte
+livro                         Objeto para leitura
+computador                    Máquina para processamento
+telefone                      Dispositivo de comunicação
+escola                        Local de aprendizado
+comida                        Alimento para nutrição
+água                          Líquido essencial para vida
+sol                           Estrela do sistema solar
+lua                           Satélite natural da Terra

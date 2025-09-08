@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,8 @@ namespace OpenAddressingHashTable.NET
     public partial class Form1 : Form
     {
         private IHashing<PalavraEDica> hashTable;
+        private const string DATA_FILE_PATH = "dados.txt";
+        private List<PalavraEDica> cachedData;
         
         public Form1()
         {
@@ -24,8 +27,12 @@ namespace OpenAddressingHashTable.NET
         
         private void InitializeHashTable()
         {
+            // Load data from file first
+            LoadDataFromFile();
+            
             // Start with BucketHash as default
             hashTable = new BucketHash<PalavraEDica>();
+            LoadDataIntoHashTable();
             radio_BucketHash.Checked = true;
         }
         
@@ -52,8 +59,8 @@ namespace OpenAddressingHashTable.NET
             RadioButton radio = sender as RadioButton;
             if (radio != null && radio.Checked)
             {
-                // Preserve existing data
-                var currentData = hashTable?.Conteudo() ?? new List<PalavraEDica>();
+                // Load data from file every time a radio button is selected
+                LoadDataFromFile();
                 
                 // Create new hash table based on selection
                 if (radio == radio_BucketHash)
@@ -65,11 +72,8 @@ namespace OpenAddressingHashTable.NET
                 else if (radio == radio_duploHash)
                     hashTable = new DoubleHashing<PalavraEDica>();
                 
-                // Restore data to new hash table
-                foreach (var item in currentData)
-                {
-                    hashTable.Incluir(item);
-                }
+                // Load the file data into the new hash table
+                LoadDataIntoHashTable();
                 
                 // Refresh the list
                 AtualizarListagem();
@@ -241,6 +245,56 @@ namespace OpenAddressingHashTable.NET
                 var selectedRow = lsbListagem.SelectedRows[0];
                 textBox_palavra.Text = selectedRow.Cells["Palavra"].Value?.ToString() ?? "";
                 textBox_Dica.Text = selectedRow.Cells["Dica"].Value?.ToString() ?? "";
+            }
+        }
+        
+        /// <summary>
+        /// Carrega dados do arquivo .txt usando StreamReader e a classe PalavraEDica
+        /// </summary>
+        private void LoadDataFromFile()
+        {
+            cachedData = new List<PalavraEDica>();
+            
+            try
+            {
+                string filePath = Path.Combine(Application.StartupPath, DATA_FILE_PATH);
+                
+                if (File.Exists(filePath))
+                {
+                    using (StreamReader reader = new StreamReader(filePath))
+                    {
+                        while (!reader.EndOfStream)
+                        {
+                            var palavra = new PalavraEDica();
+                            palavra.LerRegistro(reader);
+                            
+                            // Verifica se leu dados válidos
+                            if (!string.IsNullOrWhiteSpace(palavra.Palavra) && !string.IsNullOrWhiteSpace(palavra.Dica))
+                            {
+                                cachedData.Add(palavra);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao carregar dados do arquivo: {ex.Message}", "Erro", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        
+        /// <summary>
+        /// Carrega os dados em cache na tabela hash atual
+        /// </summary>
+        private void LoadDataIntoHashTable()
+        {
+            if (cachedData != null && hashTable != null)
+            {
+                foreach (var item in cachedData)
+                {
+                    hashTable.Incluir(item);
+                }
             }
         }
     }
