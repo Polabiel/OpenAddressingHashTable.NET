@@ -138,6 +138,8 @@ namespace OpenAddressingHashTable.NET
                 else
                 {
                     MessageBox.Show("Esta palavra já existe na tabela.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    textBox_palavra.SelectAll();
+                    textBox_palavra.Focus();
                 }
             }
             catch (Exception ex)
