@@ -51,4 +51,10 @@ public class BucketHash<T> : IHashing<T> where T : IRegistro<T>, new()
                 saida.Add(dado);
         return saida;
     }
+    
+    public void Limpar()
+    {
+        for (int i = 0; i < dados.Length; i++)
+            dados[i].Clear();
+    }
 }
