@@ -267,10 +267,10 @@ namespace OpenAddressingHashTable.NET
             {
                 lsbListagem.Columns.Clear();
                 lsbListagem.AutoGenerateColumns = false;
-                lsbListagem.Columns.Add("Posicao", "Posição");
+                lsbListagem.Columns.Add("Indice", "Índice");
                 lsbListagem.Columns.Add("Palavra", "Palavra");
                 lsbListagem.Columns.Add("Dica", "Dica");
-                lsbListagem.Columns["Posicao"].Width = 80;
+                lsbListagem.Columns["Indice"].Width = 80;
                 lsbListagem.Columns["Palavra"].Width = 200;
                 lsbListagem.Columns["Dica"].Width = 350;
                 lsbListagem.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
@@ -303,7 +303,7 @@ namespace OpenAddressingHashTable.NET
         {
             try
             {
-                // Use reflection to access private fields to show bucket structure
+                // Use reflection to access private fields to show complete bucket structure
                 var dadosField = typeof(BucketHash<PalavraEDica>).GetField("dados", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 
@@ -311,17 +311,26 @@ namespace OpenAddressingHashTable.NET
                 {
                     var dados = (System.Collections.ArrayList[])dadosField.GetValue(bucketHash);
                     
+                    // Show the complete hash table structure including empty buckets
                     for (int i = 0; i < dados.Length; i++)
                     {
                         if (dados[i].Count > 0)
                         {
-                            foreach (PalavraEDica item in dados[i])
+                            // Show each item in the bucket
+                            for (int j = 0; j < dados[i].Count; j++)
                             {
+                                var item = dados[i][j] as PalavraEDica;
                                 if (item != null)
                                 {
-                                    lsbListagem.Rows.Add($"Bucket {i}", item.Palavra ?? "", item.Dica ?? "");
+                                    string bucketInfo = j == 0 ? i.ToString() : $"{i}.{j}";
+                                    lsbListagem.Rows.Add(bucketInfo, item.Palavra ?? "", item.Dica ?? "");
                                 }
                             }
+                        }
+                        else
+                        {
+                            // Show empty bucket
+                            lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
                         }
                     }
                 }
@@ -370,12 +379,33 @@ namespace OpenAddressingHashTable.NET
                     var tabela = (PalavraEDica[])tabelaField.GetValue(linearHash);
                     var tombstone = (bool[])tombstoneField.GetValue(linearHash);
                     
-                    for (int i = 0; i < tabela.Length; i++)
+                    // Show only the first portion of the table to avoid overwhelming display
+                    // For educational purposes, show first 50 positions or until we have shown some data
+                    int maxDisplay = Math.Min(100, tabela.Length);
+                    int dataShown = 0;
+                    
+                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
                     {
-                        if (tabela[i] != null && !tombstone[i])
+                        if (tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
+                            dataShown++;
+                        }
+                        else if (tabela[i] != null)
                         {
                             lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                            dataShown++;
                         }
+                        else
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Add a summary row if we didn't show everything
+                    if (maxDisplay < tabela.Length)
+                    {
+                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
                     }
                 }
                 else
@@ -422,12 +452,32 @@ namespace OpenAddressingHashTable.NET
                     var tabela = (PalavraEDica[])tabelaField.GetValue(quadraticHash);
                     var tombstone = (bool[])tombstoneField.GetValue(quadraticHash);
                     
-                    for (int i = 0; i < tabela.Length; i++)
+                    // Show only the first portion of the table to avoid overwhelming display
+                    int maxDisplay = Math.Min(100, tabela.Length);
+                    int dataShown = 0;
+                    
+                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
                     {
-                        if (tabela[i] != null && !tombstone[i])
+                        if (tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
+                            dataShown++;
+                        }
+                        else if (tabela[i] != null)
                         {
                             lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                            dataShown++;
                         }
+                        else
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Add a summary row if we didn't show everything
+                    if (maxDisplay < tabela.Length)
+                    {
+                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
                     }
                 }
                 else
@@ -474,12 +524,32 @@ namespace OpenAddressingHashTable.NET
                     var tabela = (PalavraEDica[])tabelaField.GetValue(doubleHash);
                     var tombstone = (bool[])tombstoneField.GetValue(doubleHash);
                     
-                    for (int i = 0; i < tabela.Length; i++)
+                    // Show only the first portion of the table to avoid overwhelming display
+                    int maxDisplay = Math.Min(100, tabela.Length);
+                    int dataShown = 0;
+                    
+                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
                     {
-                        if (tabela[i] != null && !tombstone[i])
+                        if (tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
+                            dataShown++;
+                        }
+                        else if (tabela[i] != null)
                         {
                             lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                            dataShown++;
                         }
+                        else
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Add a summary row if we didn't show everything
+                    if (maxDisplay < tabela.Length)
+                    {
+                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
                     }
                 }
                 else
@@ -516,9 +586,21 @@ namespace OpenAddressingHashTable.NET
             if (lsbListagem.SelectedRows.Count > 0)
             {
                 var selectedRow = lsbListagem.SelectedRows[0];
-                // Access Palavra and Dica columns (index 1 and 2 now, since position is index 0)
-                textBox_palavra.Text = selectedRow.Cells["Palavra"].Value?.ToString() ?? "";
-                textBox_Dica.Text = selectedRow.Cells["Dica"].Value?.ToString() ?? "";
+                var palavra = selectedRow.Cells["Palavra"].Value?.ToString() ?? "";
+                var dica = selectedRow.Cells["Dica"].Value?.ToString() ?? "";
+                
+                // Only populate text boxes if it's not an empty or removed slot
+                if (palavra != "-- vazio --" && palavra != "-- removido --" && !palavra.StartsWith("..."))
+                {
+                    textBox_palavra.Text = palavra;
+                    textBox_Dica.Text = dica;
+                }
+                else
+                {
+                    // Clear text boxes for empty/removed slots
+                    textBox_palavra.Clear();
+                    textBox_Dica.Clear();
+                }
             }
         }
         
