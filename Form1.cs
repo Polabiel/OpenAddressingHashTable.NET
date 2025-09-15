@@ -33,7 +33,6 @@ namespace OpenAddressingHashTable.NET
             // Start with BucketHash as default
             hashTable = new BucketHash<PalavraEDica>();
             LoadDataIntoHashTable();
-            AtualizarListagem(); // Display loaded data automatically
             radio_BucketHash.Checked = true;
         }
         
