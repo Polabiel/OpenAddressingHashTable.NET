@@ -77,6 +77,9 @@ namespace OpenAddressingHashTable.NET
                 textBox_Dica.Clear();
                 lsbListagem.ClearSelection();
                 
+                // Clear the listing immediately to avoid showing data from previous method
+                lsbListagem.Rows.Clear();
+                
                 // Clear the current hash table before creating a new one
                 if (hashTable != null)
                 {
@@ -99,7 +102,7 @@ namespace OpenAddressingHashTable.NET
                 // Load the file data into the new hash table
                 LoadDataIntoHashTable();
                 
-                // Refresh the list
+                // Refresh the list with the new hashing order
                 AtualizarListagem();
             }
         }
@@ -245,35 +248,14 @@ namespace OpenAddressingHashTable.NET
                     return;
                 }
                 
-                var dados = hashTable.Conteudo();
-                
-                // Configure DataGridView if not already configured
-                if (lsbListagem.Columns.Count == 0)
-                {
-                    lsbListagem.AutoGenerateColumns = false;
-                    lsbListagem.Columns.Add("Palavra", "Palavra");
-                    lsbListagem.Columns.Add("Dica", "Dica");
-                    lsbListagem.Columns["Palavra"].Width = 200;
-                    lsbListagem.Columns["Dica"].Width = 400;
-                    lsbListagem.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                    lsbListagem.MultiSelect = false;
-                    lsbListagem.ReadOnly = true;
-                }
+                // Configure DataGridView columns to show hashing order
+                ConfigurarColunas();
                 
                 // Clear existing rows
                 lsbListagem.Rows.Clear();
                 
-                // Add data to DataGridView
-                if (dados != null)
-                {
-                    foreach (var palavra in dados)
-                    {
-                        if (palavra != null)
-                        {
-                            lsbListagem.Rows.Add(palavra.Palavra ?? "", palavra.Dica ?? "");
-                        }
-                    }
-                }
+                // Display data according to the hashing order of the current method
+                ExibirOrdemHashing();
             }
             catch (Exception ex)
             {
@@ -282,11 +264,146 @@ namespace OpenAddressingHashTable.NET
             }
         }
         
+        private void ConfigurarColunas()
+        {
+            // Only configure columns if not already done or if we need to reset them
+            if (lsbListagem.Columns.Count != 3)
+            {
+                lsbListagem.Columns.Clear();
+                lsbListagem.AutoGenerateColumns = false;
+                lsbListagem.Columns.Add("Posicao", "Posição");
+                lsbListagem.Columns.Add("Palavra", "Palavra");
+                lsbListagem.Columns.Add("Dica", "Dica");
+                lsbListagem.Columns["Posicao"].Width = 80;
+                lsbListagem.Columns["Palavra"].Width = 200;
+                lsbListagem.Columns["Dica"].Width = 350;
+                lsbListagem.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                lsbListagem.MultiSelect = false;
+                lsbListagem.ReadOnly = true;
+            }
+        }
+        
+        private void ExibirOrdemHashing()
+        {
+            if (hashTable is BucketHash<PalavraEDica> bucketHash)
+            {
+                ExibirOrdemBucketHash(bucketHash);
+            }
+            else if (hashTable is LinearProbingHash<PalavraEDica> linearHash)
+            {
+                ExibirOrdemLinearProbing(linearHash);
+            }
+            else if (hashTable is QuadraticProbingHash<PalavraEDica> quadraticHash)
+            {
+                ExibirOrdemQuadraticProbing(quadraticHash);
+            }
+            else if (hashTable is DoubleHashing<PalavraEDica> doubleHash)
+            {
+                ExibirOrdemDoubleHashing(doubleHash);
+            }
+        }
+        
+        private void ExibirOrdemBucketHash(BucketHash<PalavraEDica> bucketHash)
+        {
+            // Use reflection to access private fields to show bucket structure
+            var dadosField = typeof(BucketHash<PalavraEDica>).GetField("dados", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            if (dadosField != null)
+            {
+                var dados = (System.Collections.ArrayList[])dadosField.GetValue(bucketHash);
+                
+                for (int i = 0; i < dados.Length; i++)
+                {
+                    if (dados[i].Count > 0)
+                    {
+                        foreach (PalavraEDica item in dados[i])
+                        {
+                            if (item != null)
+                            {
+                                lsbListagem.Rows.Add($"Bucket {i}", item.Palavra ?? "", item.Dica ?? "");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        private void ExibirOrdemLinearProbing(LinearProbingHash<PalavraEDica> linearHash)
+        {
+            // Use reflection to access private fields
+            var tabelaField = typeof(LinearProbingHash<PalavraEDica>).GetField("tabela",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var tombstoneField = typeof(LinearProbingHash<PalavraEDica>).GetField("tombstone",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                
+            if (tabelaField != null && tombstoneField != null)
+            {
+                var tabela = (PalavraEDica[])tabelaField.GetValue(linearHash);
+                var tombstone = (bool[])tombstoneField.GetValue(linearHash);
+                
+                for (int i = 0; i < tabela.Length; i++)
+                {
+                    if (tabela[i] != null && !tombstone[i])
+                    {
+                        lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                    }
+                }
+            }
+        }
+        
+        private void ExibirOrdemQuadraticProbing(QuadraticProbingHash<PalavraEDica> quadraticHash)
+        {
+            // Use reflection to access private fields
+            var tabelaField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tabela",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var tombstoneField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tombstone",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                
+            if (tabelaField != null && tombstoneField != null)
+            {
+                var tabela = (PalavraEDica[])tabelaField.GetValue(quadraticHash);
+                var tombstone = (bool[])tombstoneField.GetValue(quadraticHash);
+                
+                for (int i = 0; i < tabela.Length; i++)
+                {
+                    if (tabela[i] != null && !tombstone[i])
+                    {
+                        lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                    }
+                }
+            }
+        }
+        
+        private void ExibirOrdemDoubleHashing(DoubleHashing<PalavraEDica> doubleHash)
+        {
+            // Use reflection to access private fields
+            var tabelaField = typeof(DoubleHashing<PalavraEDica>).GetField("tabela",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var tombstoneField = typeof(DoubleHashing<PalavraEDica>).GetField("tombstone",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                
+            if (tabelaField != null && tombstoneField != null)
+            {
+                var tabela = (PalavraEDica[])tabelaField.GetValue(doubleHash);
+                var tombstone = (bool[])tombstoneField.GetValue(doubleHash);
+                
+                for (int i = 0; i < tabela.Length; i++)
+                {
+                    if (tabela[i] != null && !tombstone[i])
+                    {
+                        lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                    }
+                }
+            }
+        }
+        
         private void LsbListagem_SelectionChanged(object sender, EventArgs e)
         {
             if (lsbListagem.SelectedRows.Count > 0)
             {
                 var selectedRow = lsbListagem.SelectedRows[0];
+                // Access Palavra and Dica columns (index 1 and 2 now, since position is index 0)
                 textBox_palavra.Text = selectedRow.Cells["Palavra"].Value?.ToString() ?? "";
                 textBox_Dica.Text = selectedRow.Cells["Dica"].Value?.ToString() ?? "";
             }
