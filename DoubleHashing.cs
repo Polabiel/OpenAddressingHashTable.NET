@@ -5,7 +5,7 @@ public class DoubleHashing<T> : IHashing<T> where T : IRegistro<T>, new()
 {
     private T[] tabela;
     private bool[] tombstone;
-    private int R; // prime smaller than table size for second hash
+    private int R; 
 
     public DoubleHashing() : this(10007) { }
     public DoubleHashing(int tamanho)
@@ -58,29 +58,38 @@ public class DoubleHashing<T> : IHashing<T> where T : IRegistro<T>, new()
         for (int i = 0; i < tabela.Length; i++)
         {
             int pos = (h1 + i * h2) % tabela.Length;
+
+            // Verifica se é tombstone
+            if (tombstone[pos])
+            {
+                if (primeiroTombstone == -1)
+                    primeiroTombstone = pos;
+                continue;
+            }
+
+            // Verifica se está vazio
             if (tabela[pos] == null)
             {
                 if (primeiroTombstone != -1)
                 {
+                    // Reusa o tombstone
                     tabela[primeiroTombstone] = novoDado;
                     tombstone[primeiroTombstone] = false;
                     return true;
                 }
-
-                tabela[pos] = novoDado;
-                return true;
+                else
+                {
+                    tabela[pos] = novoDado;
+                    return true;
+                }
             }
 
-            if (tombstone[pos])
-            {
-                if (primeiroTombstone == -1) primeiroTombstone = pos;
-                continue;
-            }
-
+            // Verifica se é duplicata
             if (tabela[pos].Equals(novoDado))
-                return false; // já existe
+                return false;
         }
 
+        // a tabela está cheia mas pode ter tombstone para reuso
         if (primeiroTombstone != -1)
         {
             tabela[primeiroTombstone] = novoDado;
@@ -96,13 +105,21 @@ public class DoubleHashing<T> : IHashing<T> where T : IRegistro<T>, new()
         int h1 = HashAprimorado(dado.Chave);
         int h2 = SecondHash(dado.Chave);
         onde = -1;
+
         for (int i = 0; i < tabela.Length; i++)
         {
             int pos = (h1 + i * h2) % tabela.Length;
-            if (tabela[pos] == null && !tombstone[pos])
-                return false; // slot vazio real => não existe
 
-            if (!tombstone[pos] && tabela[pos] != null && tabela[pos].Equals(dado))
+            // Se encontrou null sem tombstone, ele vai para a busca
+            if (tabela[pos] == null && !tombstone[pos])
+                return false;
+
+            // Se é tombstone, continua procurando
+            if (tombstone[pos])
+                continue;
+
+            // Se encontrou 
+            if (tabela[pos] != null && tabela[pos].Equals(dado))
             {
                 onde = pos;
                 return true;
@@ -124,7 +141,7 @@ public class DoubleHashing<T> : IHashing<T> where T : IRegistro<T>, new()
     {
         var saida = new List<T>();
         for (int i = 0; i < tabela.Length; i++)
-            if (tabela[i] != null)
+            if (tabela[i] != null && !tombstone[i])
                 saida.Add(tabela[i]);
         return saida;
     }
