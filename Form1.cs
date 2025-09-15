@@ -66,7 +66,7 @@ namespace OpenAddressingHashTable.NET
             // Attach DataGridView selection event
             lsbListagem.SelectionChanged += LsbListagem_SelectionChanged;
         }
-        
+
         private void RadioButton_CheckedChanged(object sender, EventArgs e)
         {
             RadioButton radio = sender as RadioButton;
@@ -76,17 +76,9 @@ namespace OpenAddressingHashTable.NET
                 textBox_palavra.Clear();
                 textBox_Dica.Clear();
                 lsbListagem.ClearSelection();
-                
-                // Clear the current hash table before creating a new one
-                if (hashTable != null)
-                {
-                    ClearCurrentHashTable();
-                }
-                
-                // Load data from file every time a radio button is selected
-                LoadDataFromFile();
-                
-                // Create new hash table based on selection
+
+                // ✅ SOLUÇÃO: Simplesmente cria uma NOVA instância da hash table
+                // Não precisa "limpar" a anterior, basta substituí-la
                 if (radio == radio_BucketHash)
                     hashTable = new BucketHash<PalavraEDica>();
                 else if (radio == radio_Linear)
@@ -95,15 +87,15 @@ namespace OpenAddressingHashTable.NET
                     hashTable = new QuadraticProbingHash<PalavraEDica>();
                 else if (radio == radio_duploHash)
                     hashTable = new DoubleHashing<PalavraEDica>();
-                
-                // Load the file data into the new hash table
+
+                // Load the cached data into the NEW hash table
                 LoadDataIntoHashTable();
-                
+
                 // Refresh the list
                 AtualizarListagem();
             }
         }
-        
+
         private void Btn_Incluir_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(textBox_palavra.Text) || string.IsNullOrWhiteSpace(textBox_Dica.Text))
@@ -362,7 +354,7 @@ namespace OpenAddressingHashTable.NET
                 }
             }
         }
-        
+
         /// <summary>
         /// Limpa a tabela hash atual usando reflexão para chamar o método Limpar se disponível
         /// </summary>
@@ -370,8 +362,7 @@ namespace OpenAddressingHashTable.NET
         {
             if (hashTable != null)
             {
-                // Use reflection to check if the current hash table has a Limpar method
-                var limparMethod = hashTable.GetType().GetMethod("Limpar");
+                var limparMethod = hashTable.GetType().GetMethod("Excluir");
                 if (limparMethod != null)
                 {
                     limparMethod.Invoke(hashTable, null);
