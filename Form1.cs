@@ -27,26 +27,17 @@ namespace OpenAddressingHashTable.NET
         
         private void InitializeHashTable()
         {
-            // Load data from file first
-            LoadDataFromFile();
+            // Removido carregamento automático de dados.txt
+            // Agora os dados serão carregados apenas quando o usuário selecionar um arquivo
             
             // Start with BucketHash as default
             hashTable = new BucketHash<PalavraEDica>();
-            LoadDataIntoHashTable();
-            
-            // Display loaded data automatically
-            AtualizarListagem(); 
             
             // Set default radio button
             radio_BucketHash.Checked = true;
             
-            // Optional: Show status message for debugging
-            #if DEBUG
-            int dataCount = cachedData?.Count ?? 0;
-            int hashCount = hashTable?.Conteudo()?.Count ?? 0;
-            MessageBox.Show($"Dados carregados: {dataCount} do arquivo, {hashCount} na tabela hash", 
-                "Status de Inicialização", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            #endif
+            // Initialize with empty data display
+            AtualizarListagem(); 
         }
         
         private void AttachEventHandlers()
@@ -86,8 +77,7 @@ namespace OpenAddressingHashTable.NET
                     ClearCurrentHashTable();
                 }
                 
-                // Load data from file every time a radio button is selected
-                LoadDataFromFile();
+                // Create new hash table based on selection
                 if (radio == radio_BucketHash)
                     hashTable = new BucketHash<PalavraEDica>();
                 else if (radio == radio_Linear)
@@ -97,9 +87,33 @@ namespace OpenAddressingHashTable.NET
                 else if (radio == radio_duploHash)
                     hashTable = new DoubleHashing<PalavraEDica>();
 
-                // Load the cached data into the NEW hash table
-                LoadDataIntoHashTable();
-                AtualizarListagem();
+                // Open file dialog to let user select data file
+                OpenFileDialog openFileDialog = new OpenFileDialog();
+                openFileDialog.Filter = "Arquivos de texto (*.txt)|*.txt|Todos os arquivos (*.*)|*.*";
+                openFileDialog.Title = "Selecionar arquivo de dados";
+                openFileDialog.InitialDirectory = Application.StartupPath;
+                
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        // Load data from selected file
+                        LoadDataFromFile(openFileDialog.FileName);
+                        // Load the cached data into the NEW hash table
+                        LoadDataIntoHashTable();
+                        AtualizarListagem();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Erro ao carregar arquivo: {ex.Message}", "Erro", 
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    // User cancelled file selection, just show empty table
+                    AtualizarListagem();
+                }
             }
         }
 
@@ -577,34 +591,40 @@ namespace OpenAddressingHashTable.NET
         }
         
         /// <summary>
-        /// Carrega dados do arquivo .txt usando StreamReader e a classe PalavraEDica
+        /// Carrega dados do arquivo .txt especificado usando StreamReader e a classe PalavraEDica
         /// </summary>
-        private void LoadDataFromFile()
+        /// <param name="filePath">Caminho para o arquivo a ser carregado. Se null, usa o arquivo padrão dados.txt</param>
+        private void LoadDataFromFile(string filePath = null)
         {
             cachedData = new List<PalavraEDica>();
             
             try
             {
-                string[] possiblePaths = {
-                    Path.Combine(Application.StartupPath, DATA_FILE_PATH),
-                    Path.Combine(Directory.GetCurrentDirectory(), DATA_FILE_PATH),
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DATA_FILE_PATH),
-                    DATA_FILE_PATH
-                };
+                string fileToLoad = filePath;
                 
-                string filePath = null;
-                foreach (string path in possiblePaths)
+                if (string.IsNullOrEmpty(fileToLoad))
                 {
-                    if (File.Exists(path))
+                    // Fallback para o arquivo padrão se nenhum caminho for especificado
+                    string[] possiblePaths = {
+                        Path.Combine(Application.StartupPath, DATA_FILE_PATH),
+                        Path.Combine(Directory.GetCurrentDirectory(), DATA_FILE_PATH),
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DATA_FILE_PATH),
+                        DATA_FILE_PATH
+                    };
+                    
+                    foreach (string path in possiblePaths)
                     {
-                        filePath = path;
-                        break;
+                        if (File.Exists(path))
+                        {
+                            fileToLoad = path;
+                            break;
+                        }
                     }
                 }
                 
-                if (filePath != null)
+                if (!string.IsNullOrEmpty(fileToLoad) && File.Exists(fileToLoad))
                 {
-                    using (StreamReader reader = new StreamReader(filePath))
+                    using (StreamReader reader = new StreamReader(fileToLoad))
                     {
                         while (!reader.EndOfStream)
                         {
@@ -621,7 +641,8 @@ namespace OpenAddressingHashTable.NET
                 }
                 else
                 {
-                    MessageBox.Show($"Arquivo '{DATA_FILE_PATH}' não encontrado. Verificar se o arquivo está no diretório da aplicação.", 
+                    string fileName = Path.GetFileName(fileToLoad ?? DATA_FILE_PATH);
+                    MessageBox.Show($"Arquivo '{fileName}' não encontrado.", 
                         "Arquivo não encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
@@ -647,16 +668,20 @@ namespace OpenAddressingHashTable.NET
         }
 
         /// <summary>
-        /// Limpa a tabela hash atual usando reflexão para chamar o método Limpar se disponível
+        /// Limpa a tabela hash atual usando apenas métodos da interface IHashing
+        /// Substitui a reflexão problemática por chamadas diretas aos métodos da interface
         /// </summary>
         private void ClearCurrentHashTable()
         {
             if (hashTable != null)
             {
-                var limparMethod = hashTable.GetType().GetMethod("Excluir");
-                if (limparMethod != null)
+                // Obtém todo o conteúdo da tabela hash
+                var conteudo = hashTable.Conteudo();
+                
+                // Remove cada item usando o método Excluir da interface IHashing
+                foreach (var item in conteudo)
                 {
-                    limparMethod.Invoke(hashTable, null);
+                    hashTable.Excluir(item);
                 }
             }
         }
