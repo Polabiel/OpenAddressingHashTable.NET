@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-public class LinearProbingHash<T> : IHashing<T>, IHashTable where T : IRegistro<T>, new()
+public class LinearProbingHash<T> : IHashing<T> where T : IRegistro<T>, new()
 {
     private T[] tabela;
     private bool[] tombstone;
@@ -50,7 +50,7 @@ public class LinearProbingHash<T> : IHashing<T>, IHashTable where T : IRegistro<
             }
 
             if (tabela[pos].Equals(novoDado))
-                return false; // jï¿½ existe
+                return false; // já existe
         }
 
         if (primeiroTombstone != -1)
@@ -71,7 +71,7 @@ public class LinearProbingHash<T> : IHashing<T>, IHashTable where T : IRegistro<
         {
             int pos = (h + i) % tabela.Length;
             if (tabela[pos] == null && !tombstone[pos])
-                return false; // slot vazio real => nï¿½o existe
+                return false; // slot vazio real => não existe
 
             if (!tombstone[pos] && tabela[pos] != null && tabela[pos].Equals(dado))
             {

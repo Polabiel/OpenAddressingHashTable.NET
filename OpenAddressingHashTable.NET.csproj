@@ -58,7 +58,6 @@
     </Compile>
     <Compile Include="HashSimples.cs" />
     <Compile Include="IHashing.cs" />
-    <Compile Include="IHashTable.cs" />
     <Compile Include="IRegistro.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

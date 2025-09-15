@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.ConstrainedExecution;
 using System.Xml.Linq;
 
-public class HashSimples<T> : IHashing<T>, IHashTable where T : IRegistro<T>, new()
+public class HashSimples<T> : IHashing<T> where T : IRegistro<T>, new()
 {
     const int tamanhoPadrao = 10007;  // primo
     T[] tabelaDeHash;

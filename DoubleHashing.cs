@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-public class DoubleHashing<T> : IHashing<T>, IHashTable where T : IRegistro<T>, new()
+public class DoubleHashing<T> : IHashing<T> where T : IRegistro<T>, new()
 {
     private T[] tabela;
     private bool[] tombstone;
@@ -59,7 +59,7 @@ public class DoubleHashing<T> : IHashing<T>, IHashTable where T : IRegistro<T>, 
         {
             int pos = (h1 + i * h2) % tabela.Length;
 
-            // Verifica se ï¿½ tombstone
+            // Verifica se é tombstone
             if (tombstone[pos])
             {
                 if (primeiroTombstone == -1)
@@ -67,7 +67,7 @@ public class DoubleHashing<T> : IHashing<T>, IHashTable where T : IRegistro<T>, 
                 continue;
             }
 
-            // Verifica se estï¿½ vazio
+            // Verifica se está vazio
             if (tabela[pos] == null)
             {
                 if (primeiroTombstone != -1)
@@ -84,12 +84,12 @@ public class DoubleHashing<T> : IHashing<T>, IHashTable where T : IRegistro<T>, 
                 }
             }
 
-            // Verifica se ï¿½ duplicata
+            // Verifica se é duplicata
             if (tabela[pos].Equals(novoDado))
                 return false;
         }
 
-        // a tabela estï¿½ cheia mas pode ter tombstone para reuso
+        // a tabela está cheia mas pode ter tombstone para reuso
         if (primeiroTombstone != -1)
         {
             tabela[primeiroTombstone] = novoDado;
@@ -114,7 +114,7 @@ public class DoubleHashing<T> : IHashing<T>, IHashTable where T : IRegistro<T>, 
             if (tabela[pos] == null && !tombstone[pos])
                 return false;
 
-            // Se ï¿½ tombstone, continua procurando
+            // Se é tombstone, continua procurando
             if (tombstone[pos])
                 continue;
 

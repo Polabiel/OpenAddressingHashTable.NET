@@ -668,15 +668,21 @@ namespace OpenAddressingHashTable.NET
         }
 
         /// <summary>
-        /// Limpa a tabela hash atual usando a interface IHashTable em vez de reflexão
+        /// Limpa a tabela hash atual usando apenas métodos da interface IHashing
+        /// Substitui a reflexão problemática por chamadas diretas aos métodos da interface
         /// </summary>
         private void ClearCurrentHashTable()
         {
-            // Substituição da reflexão por chamada direta à interface
-            // Anteriormente usava reflexão para chamar "Excluir" sem parâmetros, causando exceções
-            if (hashTable is IHashTable ht)
+            if (hashTable != null)
             {
-                ht.Limpar();
+                // Obtém todo o conteúdo da tabela hash
+                var conteudo = hashTable.Conteudo();
+                
+                // Remove cada item usando o método Excluir da interface IHashing
+                foreach (var item in conteudo)
+                {
+                    hashTable.Excluir(item);
+                }
             }
         }
     }

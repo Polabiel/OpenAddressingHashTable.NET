@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-public class BucketHash<T> : IHashing<T>, IHashTable where T : IRegistro<T>, new()
+public class BucketHash<T> : IHashing<T> where T : IRegistro<T>, new()
 {
     private const int SIZE = 37; // para gerar mais colisões; o ideal é primo > 100
     ArrayList[] dados; // tabela de hash expansível
