@@ -33,8 +33,20 @@ namespace OpenAddressingHashTable.NET
             // Start with BucketHash as default
             hashTable = new BucketHash<PalavraEDica>();
             LoadDataIntoHashTable();
-            AtualizarListagem(); // Display loaded data automatically
+            
+            // Display loaded data automatically
+            AtualizarListagem(); 
+            
+            // Set default radio button
             radio_BucketHash.Checked = true;
+            
+            // Optional: Show status message for debugging
+            #if DEBUG
+            int dataCount = cachedData?.Count ?? 0;
+            int hashCount = hashTable?.Conteudo()?.Count ?? 0;
+            MessageBox.Show($"Dados carregados: {dataCount} do arquivo, {hashCount} na tabela hash", 
+                "Status de Inicialização", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            #endif
         }
         
         private void AttachEventHandlers()
@@ -225,28 +237,48 @@ namespace OpenAddressingHashTable.NET
         
         private void AtualizarListagem()
         {
-            var dados = hashTable.Conteudo();
-            
-            // Configure DataGridView if not already configured
-            if (lsbListagem.Columns.Count == 0)
+            try
             {
-                lsbListagem.AutoGenerateColumns = false;
-                lsbListagem.Columns.Add("Palavra", "Palavra");
-                lsbListagem.Columns.Add("Dica", "Dica");
-                lsbListagem.Columns["Palavra"].Width = 200;
-                lsbListagem.Columns["Dica"].Width = 400;
-                lsbListagem.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                lsbListagem.MultiSelect = false;
-                lsbListagem.ReadOnly = true;
+                // Ensure hash table exists
+                if (hashTable == null)
+                {
+                    return;
+                }
+                
+                var dados = hashTable.Conteudo();
+                
+                // Configure DataGridView if not already configured
+                if (lsbListagem.Columns.Count == 0)
+                {
+                    lsbListagem.AutoGenerateColumns = false;
+                    lsbListagem.Columns.Add("Palavra", "Palavra");
+                    lsbListagem.Columns.Add("Dica", "Dica");
+                    lsbListagem.Columns["Palavra"].Width = 200;
+                    lsbListagem.Columns["Dica"].Width = 400;
+                    lsbListagem.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                    lsbListagem.MultiSelect = false;
+                    lsbListagem.ReadOnly = true;
+                }
+                
+                // Clear existing rows
+                lsbListagem.Rows.Clear();
+                
+                // Add data to DataGridView
+                if (dados != null)
+                {
+                    foreach (var palavra in dados)
+                    {
+                        if (palavra != null)
+                        {
+                            lsbListagem.Rows.Add(palavra.Palavra ?? "", palavra.Dica ?? "");
+                        }
+                    }
+                }
             }
-            
-            // Clear existing rows
-            lsbListagem.Rows.Clear();
-            
-            // Add data to DataGridView
-            foreach (var palavra in dados)
+            catch (Exception ex)
             {
-                lsbListagem.Rows.Add(palavra.Palavra, palavra.Dica);
+                MessageBox.Show($"Erro ao atualizar listagem: {ex.Message}", "Erro", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         
@@ -269,9 +301,25 @@ namespace OpenAddressingHashTable.NET
             
             try
             {
-                string filePath = Path.Combine(Application.StartupPath, DATA_FILE_PATH);
+                // Try multiple possible paths for the data file
+                string[] possiblePaths = {
+                    Path.Combine(Application.StartupPath, DATA_FILE_PATH),
+                    Path.Combine(Directory.GetCurrentDirectory(), DATA_FILE_PATH),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DATA_FILE_PATH),
+                    DATA_FILE_PATH  // Relative path as fallback
+                };
                 
-                if (File.Exists(filePath))
+                string filePath = null;
+                foreach (string path in possiblePaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        filePath = path;
+                        break;
+                    }
+                }
+                
+                if (filePath != null)
                 {
                     using (StreamReader reader = new StreamReader(filePath))
                     {
@@ -287,6 +335,11 @@ namespace OpenAddressingHashTable.NET
                             }
                         }
                     }
+                }
+                else
+                {
+                    MessageBox.Show($"Arquivo '{DATA_FILE_PATH}' não encontrado. Verificar se o arquivo está no diretório da aplicação.", 
+                        "Arquivo não encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
