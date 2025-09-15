@@ -305,25 +305,55 @@ namespace OpenAddressingHashTable.NET
         
         private void ExibirOrdemBucketHash(BucketHash<PalavraEDica> bucketHash)
         {
-            // Use reflection to access private fields to show bucket structure
-            var dadosField = typeof(BucketHash<PalavraEDica>).GetField("dados", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            if (dadosField != null)
+            try
             {
-                var dados = (System.Collections.ArrayList[])dadosField.GetValue(bucketHash);
+                // Use reflection to access private fields to show bucket structure
+                var dadosField = typeof(BucketHash<PalavraEDica>).GetField("dados", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 
-                for (int i = 0; i < dados.Length; i++)
+                if (dadosField != null)
                 {
-                    if (dados[i].Count > 0)
+                    var dados = (System.Collections.ArrayList[])dadosField.GetValue(bucketHash);
+                    
+                    for (int i = 0; i < dados.Length; i++)
                     {
-                        foreach (PalavraEDica item in dados[i])
+                        if (dados[i].Count > 0)
                         {
-                            if (item != null)
+                            foreach (PalavraEDica item in dados[i])
                             {
-                                lsbListagem.Rows.Add($"Bucket {i}", item.Palavra ?? "", item.Dica ?? "");
+                                if (item != null)
+                                {
+                                    lsbListagem.Rows.Add($"Bucket {i}", item.Palavra ?? "", item.Dica ?? "");
+                                }
                             }
                         }
+                    }
+                }
+                else
+                {
+                    // Fallback to regular content display if reflection fails
+                    var dados = hashTable.Conteudo();
+                    foreach (var item in dados)
+                    {
+                        if (item != null)
+                        {
+                            lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Fallback if there's any issue with reflection
+                MessageBox.Show($"Erro ao exibir ordem BucketHash: {ex.Message}\nUsando exibição padrão.", 
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                var dados = hashTable.Conteudo();
+                foreach (var item in dados)
+                {
+                    if (item != null)
+                    {
+                        lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                     }
                 }
             }
@@ -331,22 +361,51 @@ namespace OpenAddressingHashTable.NET
         
         private void ExibirOrdemLinearProbing(LinearProbingHash<PalavraEDica> linearHash)
         {
-            // Use reflection to access private fields
-            var tabelaField = typeof(LinearProbingHash<PalavraEDica>).GetField("tabela",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var tombstoneField = typeof(LinearProbingHash<PalavraEDica>).GetField("tombstone",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-            if (tabelaField != null && tombstoneField != null)
+            try
             {
-                var tabela = (PalavraEDica[])tabelaField.GetValue(linearHash);
-                var tombstone = (bool[])tombstoneField.GetValue(linearHash);
-                
-                for (int i = 0; i < tabela.Length; i++)
+                // Use reflection to access private fields
+                var tabelaField = typeof(LinearProbingHash<PalavraEDica>).GetField("tabela",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var tombstoneField = typeof(LinearProbingHash<PalavraEDica>).GetField("tombstone",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    
+                if (tabelaField != null && tombstoneField != null)
                 {
-                    if (tabela[i] != null && !tombstone[i])
+                    var tabela = (PalavraEDica[])tabelaField.GetValue(linearHash);
+                    var tombstone = (bool[])tombstoneField.GetValue(linearHash);
+                    
+                    for (int i = 0; i < tabela.Length; i++)
                     {
-                        lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                        if (tabela[i] != null && !tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                        }
+                    }
+                }
+                else
+                {
+                    // Fallback if reflection fails
+                    var dados = hashTable.Conteudo();
+                    foreach (var item in dados)
+                    {
+                        if (item != null)
+                        {
+                            lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao exibir ordem LinearProbing: {ex.Message}\nUsando exibição padrão.", 
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                var dados = hashTable.Conteudo();
+                foreach (var item in dados)
+                {
+                    if (item != null)
+                    {
+                        lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                     }
                 }
             }
@@ -354,22 +413,51 @@ namespace OpenAddressingHashTable.NET
         
         private void ExibirOrdemQuadraticProbing(QuadraticProbingHash<PalavraEDica> quadraticHash)
         {
-            // Use reflection to access private fields
-            var tabelaField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tabela",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var tombstoneField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tombstone",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-            if (tabelaField != null && tombstoneField != null)
+            try
             {
-                var tabela = (PalavraEDica[])tabelaField.GetValue(quadraticHash);
-                var tombstone = (bool[])tombstoneField.GetValue(quadraticHash);
-                
-                for (int i = 0; i < tabela.Length; i++)
+                // Use reflection to access private fields
+                var tabelaField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tabela",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var tombstoneField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tombstone",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    
+                if (tabelaField != null && tombstoneField != null)
                 {
-                    if (tabela[i] != null && !tombstone[i])
+                    var tabela = (PalavraEDica[])tabelaField.GetValue(quadraticHash);
+                    var tombstone = (bool[])tombstoneField.GetValue(quadraticHash);
+                    
+                    for (int i = 0; i < tabela.Length; i++)
                     {
-                        lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                        if (tabela[i] != null && !tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                        }
+                    }
+                }
+                else
+                {
+                    // Fallback if reflection fails
+                    var dados = hashTable.Conteudo();
+                    foreach (var item in dados)
+                    {
+                        if (item != null)
+                        {
+                            lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao exibir ordem QuadraticProbing: {ex.Message}\nUsando exibição padrão.", 
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                var dados = hashTable.Conteudo();
+                foreach (var item in dados)
+                {
+                    if (item != null)
+                    {
+                        lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                     }
                 }
             }
@@ -377,22 +465,51 @@ namespace OpenAddressingHashTable.NET
         
         private void ExibirOrdemDoubleHashing(DoubleHashing<PalavraEDica> doubleHash)
         {
-            // Use reflection to access private fields
-            var tabelaField = typeof(DoubleHashing<PalavraEDica>).GetField("tabela",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var tombstoneField = typeof(DoubleHashing<PalavraEDica>).GetField("tombstone",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-            if (tabelaField != null && tombstoneField != null)
+            try
             {
-                var tabela = (PalavraEDica[])tabelaField.GetValue(doubleHash);
-                var tombstone = (bool[])tombstoneField.GetValue(doubleHash);
-                
-                for (int i = 0; i < tabela.Length; i++)
+                // Use reflection to access private fields
+                var tabelaField = typeof(DoubleHashing<PalavraEDica>).GetField("tabela",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var tombstoneField = typeof(DoubleHashing<PalavraEDica>).GetField("tombstone",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    
+                if (tabelaField != null && tombstoneField != null)
                 {
-                    if (tabela[i] != null && !tombstone[i])
+                    var tabela = (PalavraEDica[])tabelaField.GetValue(doubleHash);
+                    var tombstone = (bool[])tombstoneField.GetValue(doubleHash);
+                    
+                    for (int i = 0; i < tabela.Length; i++)
                     {
-                        lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                        if (tabela[i] != null && !tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                        }
+                    }
+                }
+                else
+                {
+                    // Fallback if reflection fails
+                    var dados = hashTable.Conteudo();
+                    foreach (var item in dados)
+                    {
+                        if (item != null)
+                        {
+                            lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao exibir ordem DoubleHashing: {ex.Message}\nUsando exibição padrão.", 
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                var dados = hashTable.Conteudo();
+                foreach (var item in dados)
+                {
+                    if (item != null)
+                    {
+                        lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                     }
                 }
             }
