@@ -76,9 +76,18 @@ namespace OpenAddressingHashTable.NET
                 textBox_palavra.Clear();
                 textBox_Dica.Clear();
                 lsbListagem.ClearSelection();
-
-                // ✅ SOLUÇÃO: Simplesmente cria uma NOVA instância da hash table
-                // Não precisa "limpar" a anterior, basta substituí-la
+                
+                // Clear the listing immediately to avoid showing data from previous method
+                lsbListagem.Rows.Clear();
+                
+                // Clear the current hash table before creating a new one
+                if (hashTable != null)
+                {
+                    ClearCurrentHashTable();
+                }
+                
+                // Load data from file every time a radio button is selected
+                LoadDataFromFile();
                 if (radio == radio_BucketHash)
                     hashTable = new BucketHash<PalavraEDica>();
                 else if (radio == radio_Linear)
@@ -90,8 +99,6 @@ namespace OpenAddressingHashTable.NET
 
                 // Load the cached data into the NEW hash table
                 LoadDataIntoHashTable();
-
-                // Refresh the list
                 AtualizarListagem();
             }
         }
@@ -237,35 +244,14 @@ namespace OpenAddressingHashTable.NET
                     return;
                 }
                 
-                var dados = hashTable.Conteudo();
-                
-                // Configure DataGridView if not already configured
-                if (lsbListagem.Columns.Count == 0)
-                {
-                    lsbListagem.AutoGenerateColumns = false;
-                    lsbListagem.Columns.Add("Palavra", "Palavra");
-                    lsbListagem.Columns.Add("Dica", "Dica");
-                    lsbListagem.Columns["Palavra"].Width = 200;
-                    lsbListagem.Columns["Dica"].Width = 400;
-                    lsbListagem.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                    lsbListagem.MultiSelect = false;
-                    lsbListagem.ReadOnly = true;
-                }
+                // Configure DataGridView columns to show hashing order
+                ConfigurarColunas();
                 
                 // Clear existing rows
                 lsbListagem.Rows.Clear();
                 
-                // Add data to DataGridView
-                if (dados != null)
-                {
-                    foreach (var palavra in dados)
-                    {
-                        if (palavra != null)
-                        {
-                            lsbListagem.Rows.Add(palavra.Palavra ?? "", palavra.Dica ?? "");
-                        }
-                    }
-                }
+                // Display data according to the hashing order of the current method
+                ExibirOrdemHashing();
             }
             catch (Exception ex)
             {
@@ -274,13 +260,347 @@ namespace OpenAddressingHashTable.NET
             }
         }
         
+        private void ConfigurarColunas()
+        {
+            // Only configure columns if not already done or if we need to reset them
+            if (lsbListagem.Columns.Count != 3)
+            {
+                lsbListagem.Columns.Clear();
+                lsbListagem.AutoGenerateColumns = false;
+                lsbListagem.Columns.Add("Indice", "Índice");
+                lsbListagem.Columns.Add("Palavra", "Palavra");
+                lsbListagem.Columns.Add("Dica", "Dica");
+                lsbListagem.Columns["Indice"].Width = 80;
+                lsbListagem.Columns["Palavra"].Width = 200;
+                lsbListagem.Columns["Dica"].Width = 350;
+                lsbListagem.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                lsbListagem.MultiSelect = false;
+                lsbListagem.ReadOnly = true;
+            }
+        }
+        
+        private void ExibirOrdemHashing()
+        {
+            if (hashTable is BucketHash<PalavraEDica> bucketHash)
+            {
+                ExibirOrdemBucketHash(bucketHash);
+            }
+            else if (hashTable is LinearProbingHash<PalavraEDica> linearHash)
+            {
+                ExibirOrdemLinearProbing(linearHash);
+            }
+            else if (hashTable is QuadraticProbingHash<PalavraEDica> quadraticHash)
+            {
+                ExibirOrdemQuadraticProbing(quadraticHash);
+            }
+            else if (hashTable is DoubleHashing<PalavraEDica> doubleHash)
+            {
+                ExibirOrdemDoubleHashing(doubleHash);
+            }
+        }
+        
+        private void ExibirOrdemBucketHash(BucketHash<PalavraEDica> bucketHash)
+        {
+            try
+            {
+                // Use reflection to access private fields to show complete bucket structure
+                var dadosField = typeof(BucketHash<PalavraEDica>).GetField("dados", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                
+                if (dadosField != null)
+                {
+                    var dados = (System.Collections.ArrayList[])dadosField.GetValue(bucketHash);
+                    
+                    // Show the complete hash table structure including empty buckets
+                    for (int i = 0; i < dados.Length; i++)
+                    {
+                        if (dados[i].Count > 0)
+                        {
+                            // Show each item in the bucket
+                            for (int j = 0; j < dados[i].Count; j++)
+                            {
+                                var item = dados[i][j] as PalavraEDica;
+                                if (item != null)
+                                {
+                                    string bucketInfo = j == 0 ? i.ToString() : $"{i}.{j}";
+                                    lsbListagem.Rows.Add(bucketInfo, item.Palavra ?? "", item.Dica ?? "");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Show empty bucket
+                            lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
+                        }
+                    }
+                }
+                else
+                {
+                    // Fallback to regular content display if reflection fails
+                    var dados = hashTable.Conteudo();
+                    foreach (var item in dados)
+                    {
+                        if (item != null)
+                        {
+                            lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Fallback if there's any issue with reflection
+                MessageBox.Show($"Erro ao exibir ordem BucketHash: {ex.Message}\nUsando exibição padrão.", 
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                var dados = hashTable.Conteudo();
+                foreach (var item in dados)
+                {
+                    if (item != null)
+                    {
+                        lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                    }
+                }
+            }
+        }
+        
+        private void ExibirOrdemLinearProbing(LinearProbingHash<PalavraEDica> linearHash)
+        {
+            try
+            {
+                // Use reflection to access private fields
+                var tabelaField = typeof(LinearProbingHash<PalavraEDica>).GetField("tabela",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var tombstoneField = typeof(LinearProbingHash<PalavraEDica>).GetField("tombstone",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    
+                if (tabelaField != null && tombstoneField != null)
+                {
+                    var tabela = (PalavraEDica[])tabelaField.GetValue(linearHash);
+                    var tombstone = (bool[])tombstoneField.GetValue(linearHash);
+                    
+                    // Show only the first portion of the table to avoid overwhelming display
+                    // For educational purposes, show first 50 positions or until we have shown some data
+                    int maxDisplay = Math.Min(100, tabela.Length);
+                    int dataShown = 0;
+                    
+                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
+                    {
+                        if (tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
+                            dataShown++;
+                        }
+                        else if (tabela[i] != null)
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                            dataShown++;
+                        }
+                        else
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Add a summary row if we didn't show everything
+                    if (maxDisplay < tabela.Length)
+                    {
+                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
+                    }
+                }
+                else
+                {
+                    // Fallback if reflection fails
+                    var dados = hashTable.Conteudo();
+                    foreach (var item in dados)
+                    {
+                        if (item != null)
+                        {
+                            lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao exibir ordem LinearProbing: {ex.Message}\nUsando exibição padrão.", 
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                var dados = hashTable.Conteudo();
+                foreach (var item in dados)
+                {
+                    if (item != null)
+                    {
+                        lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                    }
+                }
+            }
+        }
+        
+        private void ExibirOrdemQuadraticProbing(QuadraticProbingHash<PalavraEDica> quadraticHash)
+        {
+            try
+            {
+                // Use reflection to access private fields
+                var tabelaField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tabela",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var tombstoneField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tombstone",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    
+                if (tabelaField != null && tombstoneField != null)
+                {
+                    var tabela = (PalavraEDica[])tabelaField.GetValue(quadraticHash);
+                    var tombstone = (bool[])tombstoneField.GetValue(quadraticHash);
+                    
+                    // Show only the first portion of the table to avoid overwhelming display
+                    int maxDisplay = Math.Min(100, tabela.Length);
+                    int dataShown = 0;
+                    
+                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
+                    {
+                        if (tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
+                            dataShown++;
+                        }
+                        else if (tabela[i] != null)
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                            dataShown++;
+                        }
+                        else
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Add a summary row if we didn't show everything
+                    if (maxDisplay < tabela.Length)
+                    {
+                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
+                    }
+                }
+                else
+                {
+                    // Fallback if reflection fails
+                    var dados = hashTable.Conteudo();
+                    foreach (var item in dados)
+                    {
+                        if (item != null)
+                        {
+                            lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao exibir ordem QuadraticProbing: {ex.Message}\nUsando exibição padrão.", 
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                var dados = hashTable.Conteudo();
+                foreach (var item in dados)
+                {
+                    if (item != null)
+                    {
+                        lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                    }
+                }
+            }
+        }
+        
+        private void ExibirOrdemDoubleHashing(DoubleHashing<PalavraEDica> doubleHash)
+        {
+            try
+            {
+                // Use reflection to access private fields
+                var tabelaField = typeof(DoubleHashing<PalavraEDica>).GetField("tabela",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var tombstoneField = typeof(DoubleHashing<PalavraEDica>).GetField("tombstone",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    
+                if (tabelaField != null && tombstoneField != null)
+                {
+                    var tabela = (PalavraEDica[])tabelaField.GetValue(doubleHash);
+                    var tombstone = (bool[])tombstoneField.GetValue(doubleHash);
+                    
+                    // Show only the first portion of the table to avoid overwhelming display
+                    int maxDisplay = Math.Min(100, tabela.Length);
+                    int dataShown = 0;
+                    
+                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
+                    {
+                        if (tombstone[i])
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
+                            dataShown++;
+                        }
+                        else if (tabela[i] != null)
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
+                            dataShown++;
+                        }
+                        else
+                        {
+                            lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Add a summary row if we didn't show everything
+                    if (maxDisplay < tabela.Length)
+                    {
+                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
+                    }
+                }
+                else
+                {
+                    // Fallback if reflection fails
+                    var dados = hashTable.Conteudo();
+                    foreach (var item in dados)
+                    {
+                        if (item != null)
+                        {
+                            lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao exibir ordem DoubleHashing: {ex.Message}\nUsando exibição padrão.", 
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                var dados = hashTable.Conteudo();
+                foreach (var item in dados)
+                {
+                    if (item != null)
+                    {
+                        lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
+                    }
+                }
+            }
+        }
+        
         private void LsbListagem_SelectionChanged(object sender, EventArgs e)
         {
             if (lsbListagem.SelectedRows.Count > 0)
             {
                 var selectedRow = lsbListagem.SelectedRows[0];
-                textBox_palavra.Text = selectedRow.Cells["Palavra"].Value?.ToString() ?? "";
-                textBox_Dica.Text = selectedRow.Cells["Dica"].Value?.ToString() ?? "";
+                var palavra = selectedRow.Cells["Palavra"].Value?.ToString() ?? "";
+                var dica = selectedRow.Cells["Dica"].Value?.ToString() ?? "";
+                
+                // Only populate text boxes if it's not an empty or removed slot
+                if (palavra != "-- vazio --" && palavra != "-- removido --" && !palavra.StartsWith("..."))
+                {
+                    textBox_palavra.Text = palavra;
+                    textBox_Dica.Text = dica;
+                }
+                else
+                {
+                    // Clear text boxes for empty/removed slots
+                    textBox_palavra.Clear();
+                    textBox_Dica.Clear();
+                }
             }
         }
         
