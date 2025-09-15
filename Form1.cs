@@ -201,8 +201,7 @@ namespace OpenAddressingHashTable.NET
             {
                 var palavraOriginalObj = new PalavraEDica(palavraOriginal, dicaOriginal);
                 var novaPalavraObj = new PalavraEDica(textBox_palavra.Text.Trim(), textBox_Dica.Text.Trim());
-                
-                // Remove the old entry and add the new one
+
                 if (hashTable.Excluir(palavraOriginalObj))
                 {
                     if (hashTable.Incluir(novaPalavraObj))
@@ -213,7 +212,6 @@ namespace OpenAddressingHashTable.NET
                     }
                     else
                     {
-                        // If inclusion fails, try to restore the original
                         hashTable.Incluir(palavraOriginalObj);
                         MessageBox.Show("Não foi possível alterar o dado. Palavra já existe.", "Erro na alteração", 
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -238,19 +236,15 @@ namespace OpenAddressingHashTable.NET
         {
             try
             {
-                // Ensure hash table exists
                 if (hashTable == null)
                 {
                     return;
                 }
                 
-                // Configure DataGridView columns to show hashing order
                 ConfigurarColunas();
                 
-                // Clear existing rows
                 lsbListagem.Rows.Clear();
                 
-                // Display data according to the hashing order of the current method
                 ExibirOrdemHashing();
             }
             catch (Exception ex)
@@ -262,7 +256,6 @@ namespace OpenAddressingHashTable.NET
         
         private void ConfigurarColunas()
         {
-            // Only configure columns if not already done or if we need to reset them
             if (lsbListagem.Columns.Count != 3)
             {
                 lsbListagem.Columns.Clear();
@@ -303,7 +296,6 @@ namespace OpenAddressingHashTable.NET
         {
             try
             {
-                // Use reflection to access private fields to show complete bucket structure
                 var dadosField = typeof(BucketHash<PalavraEDica>).GetField("dados", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 
@@ -311,12 +303,10 @@ namespace OpenAddressingHashTable.NET
                 {
                     var dados = (System.Collections.ArrayList[])dadosField.GetValue(bucketHash);
                     
-                    // Show the complete hash table structure including empty buckets
                     for (int i = 0; i < dados.Length; i++)
                     {
                         if (dados[i].Count > 0)
                         {
-                            // Show each item in the bucket
                             for (int j = 0; j < dados[i].Count; j++)
                             {
                                 var item = dados[i][j] as PalavraEDica;
@@ -329,14 +319,12 @@ namespace OpenAddressingHashTable.NET
                         }
                         else
                         {
-                            // Show empty bucket
                             lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
                         }
                     }
                 }
                 else
                 {
-                    // Fallback to regular content display if reflection fails
                     var dados = hashTable.Conteudo();
                     foreach (var item in dados)
                     {
@@ -349,7 +337,6 @@ namespace OpenAddressingHashTable.NET
             }
             catch (Exception ex)
             {
-                // Fallback if there's any issue with reflection
                 MessageBox.Show($"Erro ao exibir ordem BucketHash: {ex.Message}\nUsando exibição padrão.", 
                     "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     
@@ -368,7 +355,6 @@ namespace OpenAddressingHashTable.NET
         {
             try
             {
-                // Use reflection to access private fields
                 var tabelaField = typeof(LinearProbingHash<PalavraEDica>).GetField("tabela",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 var tombstoneField = typeof(LinearProbingHash<PalavraEDica>).GetField("tombstone",
@@ -379,8 +365,6 @@ namespace OpenAddressingHashTable.NET
                     var tabela = (PalavraEDica[])tabelaField.GetValue(linearHash);
                     var tombstone = (bool[])tombstoneField.GetValue(linearHash);
                     
-                    // Show only the first portion of the table to avoid overwhelming display
-                    // For educational purposes, show first 50 positions or until we have shown some data
                     int maxDisplay = Math.Min(100, tabela.Length);
                     int dataShown = 0;
                     
@@ -402,7 +386,6 @@ namespace OpenAddressingHashTable.NET
                         }
                     }
                     
-                    // Add a summary row if we didn't show everything
                     if (maxDisplay < tabela.Length)
                     {
                         lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
@@ -410,7 +393,6 @@ namespace OpenAddressingHashTable.NET
                 }
                 else
                 {
-                    // Fallback if reflection fails
                     var dados = hashTable.Conteudo();
                     foreach (var item in dados)
                     {
@@ -441,7 +423,6 @@ namespace OpenAddressingHashTable.NET
         {
             try
             {
-                // Use reflection to access private fields
                 var tabelaField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tabela",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 var tombstoneField = typeof(QuadraticProbingHash<PalavraEDica>).GetField("tombstone",
@@ -452,7 +433,6 @@ namespace OpenAddressingHashTable.NET
                     var tabela = (PalavraEDica[])tabelaField.GetValue(quadraticHash);
                     var tombstone = (bool[])tombstoneField.GetValue(quadraticHash);
                     
-                    // Show only the first portion of the table to avoid overwhelming display
                     int maxDisplay = Math.Min(100, tabela.Length);
                     int dataShown = 0;
                     
@@ -474,7 +454,6 @@ namespace OpenAddressingHashTable.NET
                         }
                     }
                     
-                    // Add a summary row if we didn't show everything
                     if (maxDisplay < tabela.Length)
                     {
                         lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
@@ -482,7 +461,6 @@ namespace OpenAddressingHashTable.NET
                 }
                 else
                 {
-                    // Fallback if reflection fails
                     var dados = hashTable.Conteudo();
                     foreach (var item in dados)
                     {
@@ -513,7 +491,6 @@ namespace OpenAddressingHashTable.NET
         {
             try
             {
-                // Use reflection to access private fields
                 var tabelaField = typeof(DoubleHashing<PalavraEDica>).GetField("tabela",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 var tombstoneField = typeof(DoubleHashing<PalavraEDica>).GetField("tombstone",
@@ -524,7 +501,6 @@ namespace OpenAddressingHashTable.NET
                     var tabela = (PalavraEDica[])tabelaField.GetValue(doubleHash);
                     var tombstone = (bool[])tombstoneField.GetValue(doubleHash);
                     
-                    // Show only the first portion of the table to avoid overwhelming display
                     int maxDisplay = Math.Min(100, tabela.Length);
                     int dataShown = 0;
                     
@@ -546,7 +522,6 @@ namespace OpenAddressingHashTable.NET
                         }
                     }
                     
-                    // Add a summary row if we didn't show everything
                     if (maxDisplay < tabela.Length)
                     {
                         lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
@@ -554,7 +529,6 @@ namespace OpenAddressingHashTable.NET
                 }
                 else
                 {
-                    // Fallback if reflection fails
                     var dados = hashTable.Conteudo();
                     foreach (var item in dados)
                     {
@@ -589,7 +563,6 @@ namespace OpenAddressingHashTable.NET
                 var palavra = selectedRow.Cells["Palavra"].Value?.ToString() ?? "";
                 var dica = selectedRow.Cells["Dica"].Value?.ToString() ?? "";
                 
-                // Only populate text boxes if it's not an empty or removed slot
                 if (palavra != "-- vazio --" && palavra != "-- removido --" && !palavra.StartsWith("..."))
                 {
                     textBox_palavra.Text = palavra;
@@ -597,7 +570,6 @@ namespace OpenAddressingHashTable.NET
                 }
                 else
                 {
-                    // Clear text boxes for empty/removed slots
                     textBox_palavra.Clear();
                     textBox_Dica.Clear();
                 }
@@ -613,12 +585,11 @@ namespace OpenAddressingHashTable.NET
             
             try
             {
-                // Try multiple possible paths for the data file
                 string[] possiblePaths = {
                     Path.Combine(Application.StartupPath, DATA_FILE_PATH),
                     Path.Combine(Directory.GetCurrentDirectory(), DATA_FILE_PATH),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DATA_FILE_PATH),
-                    DATA_FILE_PATH  // Relative path as fallback
+                    DATA_FILE_PATH
                 };
                 
                 string filePath = null;
