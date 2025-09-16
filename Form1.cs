@@ -1,3 +1,7 @@
+// Alunos
+// Gabriel Oliveira dos Santos RA 23600
+// Andrew Douglas Nithack 23305
+
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
