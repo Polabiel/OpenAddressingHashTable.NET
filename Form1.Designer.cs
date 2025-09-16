@@ -46,11 +46,17 @@
             this.btn_Incluir = new System.Windows.Forms.Button();
             this.btn_Listar = new System.Windows.Forms.Button();
             this.lsbListagem = new System.Windows.Forms.DataGridView();
+            this.panelFooter = new System.Windows.Forms.Panel();
+            this.lblTamanhoTabela = new System.Windows.Forms.Label();
+            this.lblSlotsOcupados = new System.Windows.Forms.Label();
+            this.lblSlotsRemovidos = new System.Windows.Forms.Label();
+            this.lblSlotsVazios = new System.Windows.Forms.Label();
             this.flowLayoutPanel1.SuspendLayout();
             this.flowLayoutPanel2.SuspendLayout();
             this.flowLayoutPanel3.SuspendLayout();
             this.flowLayoutPanel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.lsbListagem)).BeginInit();
+            this.panelFooter.SuspendLayout();
             this.SuspendLayout();
             // 
             // flowLayoutPanel1
@@ -223,11 +229,62 @@
             this.lsbListagem.Size = new System.Drawing.Size(635, 207);
             this.lsbListagem.TabIndex = 5;
             // 
+            // panelFooter
+            // 
+            this.panelFooter.BackColor = System.Drawing.SystemColors.Control;
+            this.panelFooter.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelFooter.Controls.Add(this.lblTamanhoTabela);
+            this.panelFooter.Controls.Add(this.lblSlotsOcupados);
+            this.panelFooter.Controls.Add(this.lblSlotsRemovidos);
+            this.panelFooter.Controls.Add(this.lblSlotsVazios);
+            this.panelFooter.Location = new System.Drawing.Point(18, 360);
+            this.panelFooter.Name = "panelFooter";
+            this.panelFooter.Size = new System.Drawing.Size(635, 50);
+            this.panelFooter.TabIndex = 6;
+            // 
+            // lblTamanhoTabela
+            // 
+            this.lblTamanhoTabela.AutoSize = true;
+            this.lblTamanhoTabela.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTamanhoTabela.Location = new System.Drawing.Point(5, 5);
+            this.lblTamanhoTabela.Name = "lblTamanhoTabela";
+            this.lblTamanhoTabela.Size = new System.Drawing.Size(120, 13);
+            this.lblTamanhoTabela.TabIndex = 0;
+            this.lblTamanhoTabela.Text = "Tamanho da tabela: -";
+            // 
+            // lblSlotsOcupados
+            // 
+            this.lblSlotsOcupados.AutoSize = true;
+            this.lblSlotsOcupados.Location = new System.Drawing.Point(180, 5);
+            this.lblSlotsOcupados.Name = "lblSlotsOcupados";
+            this.lblSlotsOcupados.Size = new System.Drawing.Size(90, 13);
+            this.lblSlotsOcupados.TabIndex = 1;
+            this.lblSlotsOcupados.Text = "Slots ocupados: -";
+            // 
+            // lblSlotsRemovidos
+            // 
+            this.lblSlotsRemovidos.AutoSize = true;
+            this.lblSlotsRemovidos.Location = new System.Drawing.Point(320, 5);
+            this.lblSlotsRemovidos.Name = "lblSlotsRemovidos";
+            this.lblSlotsRemovidos.Size = new System.Drawing.Size(94, 13);
+            this.lblSlotsRemovidos.TabIndex = 2;
+            this.lblSlotsRemovidos.Text = "Slots removidos: -";
+            // 
+            // lblSlotsVazios
+            // 
+            this.lblSlotsVazios.AutoSize = true;
+            this.lblSlotsVazios.Location = new System.Drawing.Point(5, 25);
+            this.lblSlotsVazios.Name = "lblSlotsVazios";
+            this.lblSlotsVazios.Size = new System.Drawing.Size(80, 13);
+            this.lblSlotsVazios.TabIndex = 3;
+            this.lblSlotsVazios.Text = "Slots vazios: -";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(671, 376);
+            this.ClientSize = new System.Drawing.Size(671, 420);
+            this.Controls.Add(this.panelFooter);
             this.Controls.Add(this.lsbListagem);
             this.Controls.Add(this.flowLayoutPanel4);
             this.Controls.Add(this.flowLayoutPanel2);
@@ -243,7 +300,10 @@
             this.flowLayoutPanel3.PerformLayout();
             this.flowLayoutPanel4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.lsbListagem)).EndInit();
+            this.panelFooter.ResumeLayout(false);
+            this.panelFooter.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -267,6 +327,11 @@
         private System.Windows.Forms.Button btn_Incluir;
         private System.Windows.Forms.Button btn_Listar;
         private System.Windows.Forms.DataGridView lsbListagem;
+        private System.Windows.Forms.Panel panelFooter;
+        private System.Windows.Forms.Label lblTamanhoTabela;
+        private System.Windows.Forms.Label lblSlotsOcupados;
+        private System.Windows.Forms.Label lblSlotsRemovidos;
+        private System.Windows.Forms.Label lblSlotsVazios;
     }
 }
 

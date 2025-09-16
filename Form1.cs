@@ -29,32 +29,25 @@ namespace OpenAddressingHashTable.NET
         {
             // Removido carregamento automático de dados.txt
             // Agora os dados serão carregados apenas quando o usuário selecionar um arquivo
-            
-            // Start with BucketHash as default
             hashTable = new BucketHash<PalavraEDica>();
             
-            // Set default radio button
             radio_BucketHash.Checked = true;
             
-            // Initialize with empty data display
             AtualizarListagem(); 
         }
         
         private void AttachEventHandlers()
         {
-            // Attach radio button events
             radio_BucketHash.CheckedChanged += RadioButton_CheckedChanged;
             radio_Linear.CheckedChanged += RadioButton_CheckedChanged;
             radio_Quadratica.CheckedChanged += RadioButton_CheckedChanged;
             radio_duploHash.CheckedChanged += RadioButton_CheckedChanged;
             
-            // Attach CRUD button events
             btn_Incluir.Click += Btn_Incluir_Click;
             btn_Excluir.Click += Btn_Excluir_Click;
             btn_Alterar.Click += Btn_Alterar_Click;
             btn_Listar.Click += Btn_Listar_Click;
             
-            // Attach DataGridView selection event
             lsbListagem.SelectionChanged += LsbListagem_SelectionChanged;
         }
 
@@ -63,21 +56,17 @@ namespace OpenAddressingHashTable.NET
             RadioButton radio = sender as RadioButton;
             if (radio != null && radio.Checked)
             {
-                // Clear information from previous operation
                 textBox_palavra.Clear();
                 textBox_Dica.Clear();
                 lsbListagem.ClearSelection();
                 
-                // Clear the listing immediately to avoid showing data from previous method
                 lsbListagem.Rows.Clear();
                 
-                // Clear the current hash table before creating a new one
                 if (hashTable != null)
                 {
                     ClearCurrentHashTable();
                 }
                 
-                // Create new hash table based on selection
                 if (radio == radio_BucketHash)
                     hashTable = new BucketHash<PalavraEDica>();
                 else if (radio == radio_Linear)
@@ -87,7 +76,6 @@ namespace OpenAddressingHashTable.NET
                 else if (radio == radio_duploHash)
                     hashTable = new DoubleHashing<PalavraEDica>();
 
-                // Open file dialog to let user select data file
                 OpenFileDialog openFileDialog = new OpenFileDialog();
                 openFileDialog.Filter = "Arquivos de texto (*.txt)|*.txt|Todos os arquivos (*.*)|*.*";
                 openFileDialog.Title = "Selecionar arquivo de dados";
@@ -97,9 +85,7 @@ namespace OpenAddressingHashTable.NET
                 {
                     try
                     {
-                        // Load data from selected file
                         LoadDataFromFile(openFileDialog.FileName);
-                        // Load the cached data into the NEW hash table
                         LoadDataIntoHashTable();
                         AtualizarListagem();
                     }
@@ -111,7 +97,6 @@ namespace OpenAddressingHashTable.NET
                 }
                 else
                 {
-                    // User cancelled file selection, just show empty table
                     AtualizarListagem();
                 }
             }
@@ -316,16 +301,20 @@ namespace OpenAddressingHashTable.NET
                 if (dadosField != null)
                 {
                     var dados = (System.Collections.ArrayList[])dadosField.GetValue(bucketHash);
+                    int totalOcupados = 0;
+                    int bucketsUsados = 0;
                     
                     for (int i = 0; i < dados.Length; i++)
                     {
                         if (dados[i].Count > 0)
                         {
+                            bucketsUsados++;
                             for (int j = 0; j < dados[i].Count; j++)
                             {
                                 var item = dados[i][j] as PalavraEDica;
                                 if (item != null)
                                 {
+                                    totalOcupados++;
                                     string bucketInfo = j == 0 ? i.ToString() : $"{i}.{j}";
                                     lsbListagem.Rows.Add(bucketInfo, item.Palavra ?? "", item.Dica ?? "");
                                 }
@@ -336,6 +325,9 @@ namespace OpenAddressingHashTable.NET
                             lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
                         }
                     }
+                    
+                    // Atualiza informações no footer para BucketHash
+                    AtualizarFooterInfoBucket(dados.Length, bucketsUsados, totalOcupados);
                 }
                 else
                 {
@@ -347,6 +339,7 @@ namespace OpenAddressingHashTable.NET
                             lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                         }
                     }
+                    AtualizarFooterInfoBucket(0, 0, dados.Count);
                 }
             }
             catch (Exception ex)
@@ -362,6 +355,7 @@ namespace OpenAddressingHashTable.NET
                         lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                     }
                 }
+                AtualizarFooterInfoBucket(0, 0, dados.Count);
             }
         }
         
@@ -379,31 +373,69 @@ namespace OpenAddressingHashTable.NET
                     var tabela = (PalavraEDica[])tabelaField.GetValue(linearHash);
                     var tombstone = (bool[])tombstoneField.GetValue(linearHash);
                     
-                    int maxDisplay = Math.Min(100, tabela.Length);
-                    int dataShown = 0;
-                    
-                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
+                    // Encontra os índices ocupados primeiro
+                    var indicesOcupados = new List<int>();
+                    for (int i = 0; i < tabela.Length; i++)
                     {
-                        if (tombstone[i])
+                        if (tabela[i] != null || tombstone[i])
                         {
-                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
-                            dataShown++;
+                            indicesOcupados.Add(i);
                         }
-                        else if (tabela[i] != null)
-                        {
-                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
-                            dataShown++;
-                        }
-                        else
+                    }
+                    
+                    // Se não há dados, mostra apenas os primeiros slots
+                    if (indicesOcupados.Count == 0)
+                    {
+                        for (int i = 0; i < Math.Min(20, tabela.Length); i++)
                         {
                             lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
                         }
+                        if (tabela.Length > 20)
+                        {
+                            lsbListagem.Rows.Add("...", $"... mais {tabela.Length - 20} slots vazios", "...");
+                        }
+                        
+                        // Atualiza informações no footer
+                        AtualizarFooterInfo(tabela.Length, 0, 0);
+                        return;
                     }
                     
-                    if (maxDisplay < tabela.Length)
+                    // Mostra slots ocupados e alguns contextuais ao redor
+                    var exibidos = new HashSet<int>();
+                    
+                    foreach (int indice in indicesOcupados.OrderBy(x => x))
                     {
-                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
+                        // Mostra alguns slots antes e depois do ocupado para contexto
+                        for (int j = Math.Max(0, indice - 2); j <= Math.Min(tabela.Length - 1, indice + 2); j++)
+                        {
+                            if (!exibidos.Contains(j))
+                            {
+                                exibidos.Add(j);
+                            }
+                        }
                     }
+                    
+                    // Exibe os slots em ordem crescente
+                    foreach (int j in exibidos.OrderBy(x => x))
+                    {
+                        if (tabela[j] != null)
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), tabela[j].Palavra ?? "", tabela[j].Dica ?? "");
+                        }
+                        else if (tombstone[j])
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), "-- removido --", "(slot com tombstone)");
+                        }
+                        else
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Calcula e atualiza informações no footer
+                    int totalOcupados = indicesOcupados.Count(i => tabela[i] != null);
+                    int totalTombstones = indicesOcupados.Count(i => tombstone[i]);
+                    AtualizarFooterInfo(tabela.Length, totalOcupados, totalTombstones);
                 }
                 else
                 {
@@ -415,6 +447,7 @@ namespace OpenAddressingHashTable.NET
                             lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                         }
                     }
+                    AtualizarFooterInfo(0, dados.Count, 0);
                 }
             }
             catch (Exception ex)
@@ -430,6 +463,7 @@ namespace OpenAddressingHashTable.NET
                         lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                     }
                 }
+                AtualizarFooterInfo(0, dados.Count, 0);
             }
         }
         
@@ -446,32 +480,70 @@ namespace OpenAddressingHashTable.NET
                 {
                     var tabela = (PalavraEDica[])tabelaField.GetValue(quadraticHash);
                     var tombstone = (bool[])tombstoneField.GetValue(quadraticHash);
-                    
-                    int maxDisplay = Math.Min(100, tabela.Length);
-                    int dataShown = 0;
-                    
-                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
+
+                    // Encontra os índices ocupados primeiro
+                    var indicesOcupados = new List<int>();
+                    for (int i = 0; i < tabela.Length; i++)
                     {
-                        if (tombstone[i])
+                        if (tabela[i] != null || tombstone[i])
                         {
-                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
-                            dataShown++;
+                            indicesOcupados.Add(i);
                         }
-                        else if (tabela[i] != null)
-                        {
-                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
-                            dataShown++;
-                        }
-                        else
+                    }
+                    
+                    // Se não há dados, mostra apenas os primeiros slots
+                    if (indicesOcupados.Count == 0)
+                    {
+                        for (int i = 0; i < Math.Min(20, tabela.Length); i++)
                         {
                             lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
                         }
+                        if (tabela.Length > 20)
+                        {
+                            lsbListagem.Rows.Add("...", $"... mais {tabela.Length - 20} slots vazios", "...");
+                        }
+                        
+                        // Atualiza informações no footer
+                        AtualizarFooterInfo(tabela.Length, 0, 0);
+                        return;
                     }
                     
-                    if (maxDisplay < tabela.Length)
+                    // Mostra slots ocupados e alguns contextuais ao redor
+                    var exibidos = new HashSet<int>();
+                    
+                    foreach (int indice in indicesOcupados.OrderBy(x => x))
                     {
-                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
+                        // Mostra alguns slots antes e depois do ocupado para contexto
+                        for (int j = Math.Max(0, indice - 2); j <= Math.Min(tabela.Length - 1, indice + 2); j++)
+                        {
+                            if (!exibidos.Contains(j))
+                            {
+                                exibidos.Add(j);
+                            }
+                        }
                     }
+                    
+                    // Exibe os slots em ordem crescente
+                    foreach (int j in exibidos.OrderBy(x => x))
+                    {
+                        if (tabela[j] != null)
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), tabela[j].Palavra ?? "", tabela[j].Dica ?? "");
+                        }
+                        else if (tombstone[j])
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), "-- removido --", "(slot com tombstone)");
+                        }
+                        else
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Calcula e atualiza informações no footer
+                    int totalOcupados = indicesOcupados.Count(i => tabela[i] != null);
+                    int totalTombstones = indicesOcupados.Count(i => tombstone[i]);
+                    AtualizarFooterInfo(tabela.Length, totalOcupados, totalTombstones);
                 }
                 else
                 {
@@ -483,6 +555,7 @@ namespace OpenAddressingHashTable.NET
                             lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                         }
                     }
+                    AtualizarFooterInfo(0, dados.Count, 0);
                 }
             }
             catch (Exception ex)
@@ -498,6 +571,7 @@ namespace OpenAddressingHashTable.NET
                         lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                     }
                 }
+                AtualizarFooterInfo(0, dados.Count, 0);
             }
         }
         
@@ -514,32 +588,70 @@ namespace OpenAddressingHashTable.NET
                 {
                     var tabela = (PalavraEDica[])tabelaField.GetValue(doubleHash);
                     var tombstone = (bool[])tombstoneField.GetValue(doubleHash);
-                    
-                    int maxDisplay = Math.Min(100, tabela.Length);
-                    int dataShown = 0;
-                    
-                    for (int i = 0; i < maxDisplay && (dataShown < 20 || i < 50); i++)
+
+                    // Encontra os índices ocupados primeiro
+                    var indicesOcupados = new List<int>();
+                    for (int i = 0; i < tabela.Length; i++)
                     {
-                        if (tombstone[i])
+                        if (tabela[i] != null || tombstone[i])
                         {
-                            lsbListagem.Rows.Add(i.ToString(), "-- removido --", "(slot com tombstone)");
-                            dataShown++;
+                            indicesOcupados.Add(i);
                         }
-                        else if (tabela[i] != null)
-                        {
-                            lsbListagem.Rows.Add(i.ToString(), tabela[i].Palavra ?? "", tabela[i].Dica ?? "");
-                            dataShown++;
-                        }
-                        else
+                    }
+                    
+                    // Se não há dados, mostra apenas os primeiros slots
+                    if (indicesOcupados.Count == 0)
+                    {
+                        for (int i = 0; i < Math.Min(20, tabela.Length); i++)
                         {
                             lsbListagem.Rows.Add(i.ToString(), "-- vazio --", "");
                         }
+                        if (tabela.Length > 20)
+                        {
+                            lsbListagem.Rows.Add("...", $"... mais {tabela.Length - 20} slots vazios", "...");
+                        }
+                        
+                        // Atualiza informações no footer
+                        AtualizarFooterInfo(tabela.Length, 0, 0);
+                        return;
                     }
                     
-                    if (maxDisplay < tabela.Length)
+                    // Mostra slots ocupados e alguns contextuais ao redor
+                    var exibidos = new HashSet<int>();
+                    
+                    foreach (int indice in indicesOcupados.OrderBy(x => x))
                     {
-                        lsbListagem.Rows.Add("...", $"... (tabela continua até índice {tabela.Length - 1})", "");
+                        // Mostra alguns slots antes e depois do ocupado para contexto
+                        for (int j = Math.Max(0, indice - 2); j <= Math.Min(tabela.Length - 1, indice + 2); j++)
+                        {
+                            if (!exibidos.Contains(j))
+                            {
+                                exibidos.Add(j);
+                            }
+                        }
                     }
+                    
+                    // Exibe os slots em ordem crescente
+                    foreach (int j in exibidos.OrderBy(x => x))
+                    {
+                        if (tabela[j] != null)
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), tabela[j].Palavra ?? "", tabela[j].Dica ?? "");
+                        }
+                        else if (tombstone[j])
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), "-- removido --", "(slot com tombstone)");
+                        }
+                        else
+                        {
+                            lsbListagem.Rows.Add(j.ToString(), "-- vazio --", "");
+                        }
+                    }
+                    
+                    // Calcula e atualiza informações no footer
+                    int totalOcupados = indicesOcupados.Count(i => tabela[i] != null);
+                    int totalTombstones = indicesOcupados.Count(i => tombstone[i]);
+                    AtualizarFooterInfo(tabela.Length, totalOcupados, totalTombstones);
                 }
                 else
                 {
@@ -551,6 +663,7 @@ namespace OpenAddressingHashTable.NET
                             lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                         }
                     }
+                    AtualizarFooterInfo(0, dados.Count, 0);
                 }
             }
             catch (Exception ex)
@@ -566,6 +679,7 @@ namespace OpenAddressingHashTable.NET
                         lsbListagem.Rows.Add("N/A", item.Palavra ?? "", item.Dica ?? "");
                     }
                 }
+                AtualizarFooterInfo(0, dados.Count, 0);
             }
         }
         
@@ -589,11 +703,7 @@ namespace OpenAddressingHashTable.NET
                 }
             }
         }
-        
-        /// <summary>
-        /// Carrega dados do arquivo .txt especificado usando StreamReader e a classe PalavraEDica
-        /// </summary>
-        /// <param name="filePath">Caminho para o arquivo a ser carregado. Se null, usa o arquivo padrão dados.txt</param>
+
         private void LoadDataFromFile(string filePath = null)
         {
             cachedData = new List<PalavraEDica>();
@@ -653,9 +763,6 @@ namespace OpenAddressingHashTable.NET
             }
         }
         
-        /// <summary>
-        /// Carrega os dados em cache na tabela hash atual
-        /// </summary>
         private void LoadDataIntoHashTable()
         {
             if (cachedData != null && hashTable != null)
@@ -667,10 +774,6 @@ namespace OpenAddressingHashTable.NET
             }
         }
 
-        /// <summary>
-        /// Limpa a tabela hash atual usando apenas métodos da interface IHashing
-        /// Substitui a reflexão problemática por chamadas diretas aos métodos da interface
-        /// </summary>
         private void ClearCurrentHashTable()
         {
             if (hashTable != null)
@@ -684,6 +787,34 @@ namespace OpenAddressingHashTable.NET
                     hashTable.Excluir(item);
                 }
             }
+        }
+
+        private void AtualizarFooterInfo(int tamanhoTabela, int slotsOcupados, int slotsRemovidos)
+        {
+            int slotsVazios = tamanhoTabela - slotsOcupados - slotsRemovidos;
+            
+            lblTamanhoTabela.Text = $"Tamanho da tabela: {tamanhoTabela:N0}";
+            lblSlotsOcupados.Text = $"Slots ocupados: {slotsOcupados}";
+            lblSlotsRemovidos.Text = $"Slots removidos: {slotsRemovidos}";
+            lblSlotsVazios.Text = $"Slots vazios: {slotsVazios:N0}";
+        }
+
+        private void AtualizarFooterInfoBucket(int totalBuckets, int bucketsUsados, int totalItens)
+        {
+            int bucketsVazios = totalBuckets - bucketsUsados;
+            
+            lblTamanhoTabela.Text = $"Total de buckets: {totalBuckets}";
+            lblSlotsOcupados.Text = $"Buckets usados: {bucketsUsados}";
+            lblSlotsRemovidos.Text = $"Total de itens: {totalItens}";
+            lblSlotsVazios.Text = $"Buckets vazios: {bucketsVazios}";
+        }
+        
+        private void LimparFooterInfo()
+        {
+            lblTamanhoTabela.Text = "Tamanho da tabela: -";
+            lblSlotsOcupados.Text = "Slots ocupados: -";
+            lblSlotsRemovidos.Text = "Slots removidos: -";
+            lblSlotsVazios.Text = "Slots vazios: -";
         }
     }
 }
