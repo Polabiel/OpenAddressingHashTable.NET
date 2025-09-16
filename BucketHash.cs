@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 public class BucketHash<T> : IHashing<T> where T : IRegistro<T>, new()
 {
-    private const int SIZE = 37; // para gerar mais colisões; o ideal é primo > 100
+    private const int SIZE = 101; // número primo > 100 para melhor distribuição, conforme sugerido pelo professor
     ArrayList[] dados; // tabela de hash expansível
     public BucketHash()
     {
@@ -14,7 +14,7 @@ public class BucketHash<T> : IHashing<T> where T : IRegistro<T>, new()
     {
         long tot = 0;
         for (int i = 0; i < chave.Length; i++)
-            tot += 37 * tot + (char)chave[i];
+            tot = 37 * tot + (char)chave[i];
         tot = tot % dados.Length;
         if (tot < 0)
             tot += dados.Length;

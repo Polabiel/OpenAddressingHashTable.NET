@@ -6,11 +6,36 @@ public class QuadraticProbingHash<T> : IHashing<T> where T : IRegistro<T>, new()
     private T[] tabela;
     private bool[] tombstone;
 
-    public QuadraticProbingHash() : this(10007) { }
+    public QuadraticProbingHash() : this(211) { }
     public QuadraticProbingHash(int tamanho)
     {
+        tamanho = GetNextPrime(tamanho);
         tabela = new T[tamanho];
         tombstone = new bool[tamanho];
+    }
+
+    private int GetNextPrime(int number)
+    {
+        if (number <= 2) return 2;
+        if (number % 2 == 0) number++;
+        
+        while (!IsPrime(number))
+            number += 2;
+        return number;
+    }
+    
+    private bool IsPrime(int number)
+    {
+        if (number <= 1) return false;
+        if (number <= 3) return true;
+        if (number % 2 == 0 || number % 3 == 0) return false;
+        
+        for (int i = 5; i * i <= number; i += 6)
+        {
+            if (number % i == 0 || number % (i + 2) == 0)
+                return false;
+        }
+        return true;
     }
 
     private int HashAprimorado(string chave)
@@ -27,9 +52,11 @@ public class QuadraticProbingHash<T> : IHashing<T> where T : IRegistro<T>, new()
     {
         int h = HashAprimorado(novoDado.Chave);
         int primeiroTombstone = -1;
+        
         for (int i = 0; i < tabela.Length; i++)
         {
-            int pos = (h + i * i) % tabela.Length; // quadratic step
+            int pos = (h + i * i) % tabela.Length;
+            
             if (tabela[pos] == null)
             {
                 if (primeiroTombstone != -1)
@@ -50,7 +77,7 @@ public class QuadraticProbingHash<T> : IHashing<T> where T : IRegistro<T>, new()
             }
 
             if (tabela[pos].Equals(novoDado))
-                return false; // já existe
+                return false;
         }
 
         if (primeiroTombstone != -1)
@@ -60,18 +87,20 @@ public class QuadraticProbingHash<T> : IHashing<T> where T : IRegistro<T>, new()
             return true;
         }
 
-        return false; // tabela cheia
+        return false;
     }
 
     public bool Existe(T dado, out int onde)
     {
         int h = HashAprimorado(dado.Chave);
         onde = -1;
+        
         for (int i = 0; i < tabela.Length; i++)
         {
             int pos = (h + i * i) % tabela.Length;
+            
             if (tabela[pos] == null && !tombstone[pos])
-                return false; // slot vazio real => não existe
+                return false;
 
             if (!tombstone[pos] && tabela[pos] != null && tabela[pos].Equals(dado))
             {

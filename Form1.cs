@@ -237,6 +237,8 @@ namespace OpenAddressingHashTable.NET
             {
                 if (hashTable == null)
                 {
+                    // Limpa o footer se não há tabela hash
+                    LimparFooterInfo();
                     return;
                 }
                 
@@ -250,6 +252,7 @@ namespace OpenAddressingHashTable.NET
             {
                 MessageBox.Show($"Erro ao atualizar listagem: {ex.Message}", "Erro", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+                LimparFooterInfo();
             }
         }
         
